@@ -25,8 +25,24 @@ def xor_hexes hex1, hex2
 end
 
 def xor_byte_arrays bytes1, bytes2
-  bytes1.map.with_index do |byte, idx|
-    byte ^ bytes2[idx]
+  bytes1.zip(bytes2.cycle).map do |byte1, byte2|
+    byte1 ^ byte2
   end
 end
 
+def decrypt_single_byte_xor_cipher hex
+  possible_keys = 0..255
+  bytes = bytes_from_hex hex
+  best_key = possible_keys.max_by do |key|
+    result = xor_byte_arrays bytes, [key]
+    raw = raw_from_bytes result
+    score_english_similarity raw
+  end
+
+  result = xor_byte_arrays bytes, [best_key]
+  raw = raw_from_bytes result
+end
+
+def score_english_similarity raw
+  raw.count 'a-z'
+end
