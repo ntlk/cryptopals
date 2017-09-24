@@ -9,6 +9,10 @@ def bytes_from_hex hex
   hex.scan(/../).map(&:hex)
 end
 
+def bytes_from_raw raw
+  raw.bytes
+end
+
 def hex_from_bytes bytes
   bytes.map {|byte| byte.to_s(16).rjust(2, '0')}.join
 end
@@ -53,4 +57,11 @@ def find_best_raw_from_single_byte_xor_cipher hexes
   end
 
   raws.max_by {|raw| score_english_similarity raw }
+end
+
+def encrypt_repeating_key_xor raw, raw_key
+  bytes = bytes_from_raw raw
+  bytes_key = bytes_from_raw raw_key
+  result = xor_byte_arrays bytes, bytes_key
+  hex_from_bytes result
 end
