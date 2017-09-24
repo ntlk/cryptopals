@@ -46,3 +46,11 @@ end
 def score_english_similarity raw
   raw.count 'a-z'
 end
+
+def find_best_raw_from_single_byte_xor_cipher hexes
+  raws = hexes.map do |hex|
+    decrypt_single_byte_xor_cipher hex
+  end
+
+  raws.max_by {|raw| score_english_similarity raw }
+end
