@@ -1,5 +1,7 @@
 require 'base64'
 
+# Conversions
+
 def base64_from_hex hex
   bytes = bytes_from_hex hex
   Base64.strict_encode64(raw_from_bytes bytes)
@@ -34,12 +36,7 @@ def bits_from_byte byte
   byte.to_s(2).rjust(8, '0').chars
 end
 
-def xor_hexes hex1, hex2
-  bytes1 = bytes_from_hex hex1
-  bytes2 = bytes_from_hex hex2
-  result = xor_byte_arrays bytes1, bytes2
-  hex_from_bytes result
-end
+# The rest
 
 def xor_byte_arrays bytes1, bytes2
   bytes1.zip(bytes2.cycle).map do |byte1, byte2|
@@ -51,63 +48,52 @@ def find_single_byte_xor_cipher_key bytes
   possible_keys = 0..255
   possible_keys.max_by do |key|
     result = xor_byte_arrays bytes, [key]
-    raw = raw_from_bytes result
-    score_english_similarity raw
+    score_english_similarity result
   end
 end
 
-def decrypt_single_byte_xor_cipher hex
-  bytes = bytes_from_hex hex
+def decrypt_single_byte_xor_cipher bytes
   best_key = find_single_byte_xor_cipher_key bytes
-  result = xor_byte_arrays bytes, [best_key]
-  raw = raw_from_bytes result
+  xor_byte_arrays bytes, [best_key]
 end
 
-def score_english_similarity raw
-  raw.count 'a-z '
+def score_english_similarity bytes
+  raw_from_bytes(bytes).count 'a-z '
 end
 
-def find_xor_key_length possible_key_lengths, raw
-  bytes = bytes_from_raw raw
+def find_xor_key_length possible_key_lengths, bytes
   possible_key_lengths.min_by do |length|
     blocks = bytes.each_slice(length)
     distances = blocks.each_cons(2).first(10).map do |block1, block2|
-      hamming_distance raw_from_bytes(block1), raw_from_bytes(block2)
+      hamming_distance block1, block2
     end
     (distances.inject(:+) / distances.length.to_f) / length
   end
 end
 
-def find_best_raw_from_single_byte_xor_cipher hexes
-  raws = hexes.map do |hex|
-    decrypt_single_byte_xor_cipher hex
+def find_encrypted_by_single_byte_xor_cipher byte_arrays
+  decrypted_byte_arrays = byte_arrays.map do |byte_array|
+    decrypt_single_byte_xor_cipher(byte_array)
   end
 
-  raws.max_by {|raw| score_english_similarity raw }
+  decrypted_byte_arrays.max_by {|b| score_english_similarity b }
 end
 
-def find_repeating_xor_key_for_key_length length, raw
-  bytes = bytes_from_raw raw
+def find_repeating_xor_key_for_key_length length, bytes
   blocks = bytes.each_slice(length).to_a
   last_block = blocks.last
   last_block.fill(0, last_block.length, length - last_block.length)
   transposed_blocks = blocks.transpose
-  key_bytes = transposed_blocks.map do |bytes|
+  transposed_blocks.map do |bytes|
     find_single_byte_xor_cipher_key bytes
   end
-  key = raw_from_bytes key_bytes
 end
 
-def encrypt_repeating_key_xor raw, raw_key
-  bytes = bytes_from_raw raw
-  bytes_key = bytes_from_raw raw_key
-  result = xor_byte_arrays bytes, bytes_key
-  hex_from_bytes result
+def encrypt_repeating_key_xor bytes, key_bytes
+  xor_byte_arrays bytes, key_bytes
 end
 
-def hamming_distance raw1, raw2
-  bytes1 = bytes_from_raw raw1
-  bytes2 = bytes_from_raw raw2
+def hamming_distance bytes1, bytes2
   distance_array = bytes1.zip(bytes2).map do |byte1, byte2|
     bits1 = bits_from_byte byte1
     bits2 = bits_from_byte byte2
