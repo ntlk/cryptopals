@@ -64,7 +64,18 @@ def decrypt_single_byte_xor_cipher hex
 end
 
 def score_english_similarity raw
-  raw.count 'a-z'
+  raw.count 'a-z '
+end
+
+def find_xor_key_length possible_key_lengths, raw
+  bytes = bytes_from_raw raw
+  possible_key_lengths.min_by do |length|
+    blocks = bytes.each_slice(length)
+    distances = blocks.each_cons(2).first(10).map do |block1, block2|
+      hamming_distance raw_from_bytes(block1), raw_from_bytes(block2)
+    end
+    (distances.inject(:+) / distances.length.to_f) / length
+  end
 end
 
 def find_best_raw_from_single_byte_xor_cipher hexes
