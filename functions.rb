@@ -36,6 +36,10 @@ def bits_from_byte byte
   byte.to_s(2).rjust(8, '0').chars
 end
 
+def blocks_from_bytes bytes, length
+  bytes.each_slice(length).to_a
+end
+
 # The rest
 
 def xor_byte_arrays bytes1, bytes2
