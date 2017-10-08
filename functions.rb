@@ -1,4 +1,5 @@
 require 'base64'
+require 'openssl'
 
 # Conversions
 
@@ -104,6 +105,17 @@ end
 
 def encrypt_repeating_key_xor bytes, key_bytes
   xor_byte_arrays bytes, key_bytes
+end
+
+def encrypt_ecb key, bytes
+  cipher = OpenSSL::Cipher::AES.new(128, :ECB)
+  cipher.decrypt
+  cipher.key = key
+  bytes_from_raw(cipher.update(raw_from_bytes(bytes)) + cipher.final)
+end
+
+def decrypt_ecb key, bytes
+  encrypt_ecb key, bytes
 end
 
 def hamming_distance bytes1, bytes2
