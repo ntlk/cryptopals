@@ -48,6 +48,15 @@ def xor_byte_arrays bytes1, bytes2
   end
 end
 
+def pkcs7_pad bytes, length
+  if bytes.length < length
+    pad_count = length - bytes.length
+    bytes.fill(pad_count, bytes.length...length)
+  else
+    bytes
+  end
+end
+
 def find_single_byte_xor_cipher_key bytes
   possible_keys = 0..255
   possible_keys.max_by do |key|
