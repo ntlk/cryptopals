@@ -107,15 +107,47 @@ def encrypt_repeating_key_xor bytes, key_bytes
   xor_byte_arrays bytes, key_bytes
 end
 
-def encrypt_ecb key, bytes
+def encrypt_ecb key_bytes, bytes
   cipher = OpenSSL::Cipher::AES.new(128, :ECB)
-  cipher.decrypt
-  cipher.key = key
+  cipher.encrypt
+  cipher.padding = 0
+  cipher.key = raw_from_bytes(key_bytes)
   bytes_from_raw(cipher.update(raw_from_bytes(bytes)) + cipher.final)
 end
 
-def decrypt_ecb key, bytes
-  encrypt_ecb key, bytes
+def decrypt_ecb key_bytes, bytes
+  cipher = OpenSSL::Cipher::AES.new(128, :ECB)
+  cipher.decrypt
+  cipher.padding = 0
+  cipher.key = raw_from_bytes(key_bytes)
+  bytes_from_raw(cipher.update(raw_from_bytes(bytes)) + cipher.final)
+end
+
+def encrypt_cbc bytes, key_bytes, iv
+  block_size = 16
+  blocks = bytes.each_slice(block_size)
+  ciphertext_bytes = []
+  last_block = iv
+  blocks.each do |block|
+    encrypted_block = encrypt_ecb(key_bytes, xor_byte_arrays(last_block, block))
+    ciphertext_bytes.concat(encrypted_block)
+    last_block = encrypted_block
+  end
+  ciphertext_bytes
+end
+
+def decrypt_cbc bytes, key_bytes, iv
+  block_size = 16
+  blocks = bytes.each_slice(block_size)
+  plaintext = []
+  last_block = iv
+  blocks.each do |block|
+    decrypted_block = decrypt_ecb(key_bytes, block)
+    plaintext_block = xor_byte_arrays(decrypted_block, last_block)
+    last_block = block
+    plaintext.concat(plaintext_block)
+  end
+  plaintext
 end
 
 def hamming_distance bytes1, bytes2
