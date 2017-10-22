@@ -160,3 +160,40 @@ def hamming_distance bytes1, bytes2
   end
   distance_array.inject(:+)
 end
+
+def generate_random_bytes length
+  length.times.map { rand 256 }
+end
+
+def randomly_pad_input input
+  padded_input = generate_random_bytes(rand(5..10)).concat(input.concat(generate_random_bytes(rand(5..10))))
+  modulo = padded_input.length % 16
+  if modulo == 0
+    padded_input
+  else
+    extra_padding = 16 - modulo
+    padded_input.concat([0] * extra_padding)
+  end
+end
+
+def pick_mode
+  choice = rand(1..2)
+  if choice == 1
+    'ECB'
+  else
+    'CBC'
+  end
+end
+
+def black_box_encrypt input
+  padded_input = randomly_pad_input(input)
+  key = generate_random_bytes(16)
+  mode = pick_mode
+  puts mode
+  if mode == 'ECB'
+    encrypt_ecb(key, padded_input)
+  else
+    iv = generate_random_bytes(16)
+    encrypt_cbc(padded_input, key, iv)
+  end
+end
