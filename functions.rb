@@ -189,11 +189,15 @@ def black_box_encrypt input
   padded_input = randomly_pad_input(input)
   key = generate_random_bytes(16)
   mode = pick_mode
-  puts mode
   if mode == 'ECB'
     encrypt_ecb(key, padded_input)
   else
     iv = generate_random_bytes(16)
     encrypt_cbc(padded_input, key, iv)
   end
+end
+
+def is_encrypted_using_ecb? bytes
+  blocks = bytes.each_slice(16)
+  blocks.each_cons(2).any? {|block1, block2| block1 == block2 }
 end
